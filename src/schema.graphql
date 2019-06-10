@@ -3,6 +3,12 @@ type Query {
   feed: [Link!]!
 }
 
+type Mutation {
+  post(url: String!, description: String!): Link!
+  update(id: ID!, description: String, url: String): Link!
+  destroy(id: ID!): Boolean!
+}
+
 type Link {
   id: ID!
   description: String!
