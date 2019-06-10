@@ -1,41 +1,36 @@
 const { find } = require('lodash');
 
-let links = [{
-  id: 'link-0',
-  url: 'http://yodawg.com',
-  description: 'I heard you like resolvers. So I put links in your resolvers so you can link while you resolve',
-}];
+const toDbId = linkId => +linkId.replace(/^link-/, '');
 
 module.exports = {
   resolvers: {
     Query: {
       info: () => 'Yo dawg I heard you like graphs.',
-      feed: () => links,
+      feed: (root, args, { db }) => db('links'),
     },
     Mutation: {
-      post: (parent, args) => {
-        const link = {
-          id: `link-${links.length+1}`,
-          description: args.description,
-          url: args.url,
-        };
-        links.push(link);
-        return link;
+      create: async (parent, { description, url }, { db }) => {
+        const [record] = await db('links')
+          .insert({ description, url })
+          .returning('*');
+        return record;
       },
-      update: (parent, { id, url, description }) => {
-        const updatee = find(links, { id });
-        if (!!url) { updatee.url = url; }
-        if (!!description) { updatee.description = description; }
-        return updatee;
+      update: async (parent, { id, url, description }, { db }) => {
+        const [record] = await db('links')
+          .where({ id: toDbId(id) })
+          .update({ url, description })
+          .returning('*')
+          .limit(1);
+          return record;
       },
-      destroy: (parent, args) => {
-        const originalCount = links.length;
-        links = links.filter(link => link.id !== args.id);
-        return links.length < originalCount;
-      }
+      destroy: async (parent, { id }, { db }) =>
+        (await db('links')
+          .where({ id: toDbId(id) })
+          .delete()
+          .limit(1)) > 0,
     },
     Link: {
-      id: parent => parent.id,
+      id: parent => `link-${parent.id}`,
       url: parent => parent.url,
       description: parent => parent.description,
     },
