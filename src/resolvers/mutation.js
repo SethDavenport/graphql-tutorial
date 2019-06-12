@@ -1,4 +1,11 @@
 const {
+  pubsub,
+  NEW_LINK_CHANNEL,
+  UPDATED_LINK_CHANNEL,
+  DELETED_LINK_CHANNEL,
+} = require('../pubsub');
+
+const {
   APPLICATION_SECRET,
   getUserId,
   toDbId,
@@ -13,28 +20,35 @@ const createLink = async (parent, { description, url }, context) => {
     .insert({ description, url, user_id: toDbId(userId) })
     .returning('*');
 
+  pubsub.publish(NEW_LINK_CHANNEL, { newLink: record });
   return record;
 };
 
 const updateLink = async (parent, { id, url, description }, context) => {
   const userId = getUserId(context)
-  const [record] = await db('links')
+  const [record] = await context.db('links')
     .where({ id: toDbId(id), user_id: toDbId(userId) })
     .update({ url, description })
     .returning('*')
     .limit(1);
 
+  pubsub.publish(UPDATED_LINK_CHANNEL, { updatedLink: record });
   return record;
 };
 
 const destroyLink = async (parent, { id }, context) => {
   const userId = getUserId(context)
-  const count = await db('links')
+  const count = await context.db('links')
     .where({ id: toDbId(id), user_id: toDbId(userId) })
     .delete()
     .limit(1);
 
-  return count > 0;
+  const wasDeleted = count > 0;
+  if (wasDeleted) {
+    pubsub.publish(DELETED_LINK_CHANNEL, { deletedLink: id });
+  }
+
+  return wasDeleted;
 };
 
 const signup = async (parent, { email, password, name }, { db }) => {

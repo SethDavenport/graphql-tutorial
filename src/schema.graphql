@@ -29,3 +29,9 @@ type User {
   email: String!
   links: [Link!]!
 }
+
+type Subscription {
+  newLink: Link,
+  updatedLink: Link,
+  deletedLink: ID!,
+}

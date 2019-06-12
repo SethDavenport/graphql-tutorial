@@ -3,7 +3,7 @@ exports.up = knex =>
   knex.schema.table('links', t => {
     t.integer('user_id').unsigned().notNullable();
     t.foreign('user_id')
-      .references('links.id')
+      .references('users.id')
       .onDelete('CASCADE');
   });
 

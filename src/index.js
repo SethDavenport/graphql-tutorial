@@ -2,6 +2,7 @@ const { GraphQLServer } = require('graphql-yoga')
 const { db } = require('./db');
 const Query = require('./resolvers/query');
 const Mutation = require('./resolvers/mutation');
+const Subscription = require('./resolvers/subscription');
 const Link = require('./resolvers/link');
 const User = require('./resolvers/user');
 
@@ -10,6 +11,7 @@ const server = new GraphQLServer({
   resolvers: {
     Query,
     Mutation,
+    Subscription,
     Link,
     User,
   },
